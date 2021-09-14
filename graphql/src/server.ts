@@ -3,6 +3,9 @@ import { ApolloServerPluginDrainHttpServer, Config } from 'apollo-server-core';
 import express from 'express';
 import http from 'http';
 
+import { port } from './config';
+import dataSources from './data-sources';
+import logger from './logger';
 import { resolvers, typeDefs } from './schema';
 
 
@@ -11,7 +14,12 @@ export async function startServer() {
   // TODO: Configure express middleware (e.g. serve static, cors if required, etc.)
   const httpServer = http.createServer(app);
   const plugins = [ApolloServerPluginDrainHttpServer({ httpServer })];
-  const server = new ApolloServer({ typeDefs, resolvers, plugins } as Config<ExpressContext>);
+  const server = new ApolloServer({
+    typeDefs,
+    resolvers,
+    plugins,
+    dataSources,
+  } as Config<ExpressContext>);
 
   await server.start(); // Must await server start before applying middleware
   server.applyMiddleware({
@@ -19,6 +27,6 @@ export async function startServer() {
      path: '/graphql', // host from /graphql to allow serving other resources
   });
 
-  await new Promise(resolve => httpServer.listen({ port: 4000 }, resolve));
-  console.log(`🚀 Server ready at http://localhost:4000${server.graphqlPath}`);
+  await new Promise(resolve => httpServer.listen({ port }, resolve));
+  logger.info(`🚀 Server listening on :${port}${server.graphqlPath}`);
 }

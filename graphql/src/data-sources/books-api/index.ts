@@ -1,4 +1,4 @@
-// These handlers would normally be interacting with backend APIs
+// This would normally be interacting with some backend
 const books = [
   {
     id: '1',
@@ -12,37 +12,39 @@ const books = [
   },
 ];
 
-export interface BookDetails {
+interface BookDetails {
   title: string;
   author: string;
 }
 
-export interface Book extends BookDetails {
+interface Book extends BookDetails {
   id: string;
 }
 
-export const getBooks = () => books;
+const getBooks = async (): Promise<Book[]> => books;
 
-export function createBook(details: BookDetails): Book {
+const getBook = async (id: string): Promise<Book|undefined> => books.find(b => b.id === id);
+
+async function addBook(details: BookDetails): Promise<Book> {
   const id = books.reduce((nextId, b) => `${Math.max(+nextId, +b.id + 1)}`, '0');
   const book = { id, ...details };
   books.push(book);
   return book;
 }
 
-export function updateBook(updates: Book): Book|null {
-  const book = books.find(b => b.id === updates.id);
+async function updateBook(updates: Book): Promise<Book|undefined> {
+  const book = await getBook(updates.id);
   if (book) {
-    const keys = Object.keys(updates);
+    const keys = Object.keys(updates) as (keyof Book)[];
     for (let key of keys) {
       book[key] = updates[key]
     }
     return book;
   }
-  return null;
+  return undefined;
 }
 
-export function removeBook(id: string): boolean {
+async function removeBook(id: string): Promise<boolean> {
   const idx = books.findIndex(b => b.id === id);
   const found = (idx >= 0);
   if (found) {
@@ -51,11 +53,12 @@ export function removeBook(id: string): boolean {
   return found;
 }
 
-export const bookHandler = {
+const booksApi = {
   getBooks,
-  createBook,
+  getBook,
+  addBook,
   updateBook,
   removeBook,
 };
 
-export default bookHandler;
+export default booksApi;
